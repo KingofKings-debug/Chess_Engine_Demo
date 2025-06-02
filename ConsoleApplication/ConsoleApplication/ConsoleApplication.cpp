@@ -69,10 +69,10 @@ void setup_piece_map() {
 
 
 //converts the num[0,67] into {x,y} from [0,7] range;
-sf::Vector2u getcord(int n) {
+sf::Vector2i getcord(int n) {
 	int y = n / 8;
 	int x = n % 8;
-	sf::Vector2u cord(x, y);
+	sf::Vector2i cord(x, y);
 	return cord;
 }
 
@@ -120,7 +120,7 @@ void setup_board() {
 
 //funtions to get moveset of peice;
 void get_Knight_moves(int t, vector<int>& ans, int peice) {
-	sf::Vector2u a = getcord(t);
+	sf::Vector2i a = getcord(t);
 	vector<pair<int, int>> s;
 	s.push_back({ a.x + 2,a.y + 1 });
 	s.push_back({ a.x - 2,a.y + 1 });
@@ -142,9 +142,9 @@ void get_Knight_moves(int t, vector<int>& ans, int peice) {
 	}
 }
 void get_bishop_moves(int t, vector<int>& ans, int peice) {
-	sf::Vector2u a = getcord(t);
+	sf::Vector2i a = getcord(t);
 	vector<pair<int, int>> s;
-	sf::Vector2u b(a);
+	sf::Vector2i b(a);
 
 	if (b.x != 7 && b.y != 7) {
 		while (peice_board[getnumber(b.x, b.y)] == 0 || peice_board[getnumber(b.x, b.y)] == peice) {
@@ -227,19 +227,19 @@ void get_bishop_moves(int t, vector<int>& ans, int peice) {
 
 }
 void get_pawn_moves_white(int t, vector<int>& ans, int peice) {
-	sf::Vector2u a = getcord(t);
+	sf::Vector2i a = getcord(t);
 	vector<pair<int, int>> f;
 	vector<pair<int, int>> s;
-	if (white_facing_front == 1){
-		f.push_back({ a.x,a.y-1});
+	if (white_facing_front == 1) {
+		f.push_back({ a.x,a.y - 1 });
 		if (a.y == 6) {
-			if(peice_board[getnumber(a.x, a.y - 1)] == 0)
+			if (peice_board[getnumber(a.x, a.y - 1)] == 0)
 			{
 				f.push_back({ a.x,a.y - 2 });
 			}
 		}
-		s.push_back({ a.x + 1,a.y-1 });
-		s.push_back({ a.x - 1,a.y-1 });
+		s.push_back({ a.x + 1,a.y - 1 });
+		s.push_back({ a.x - 1,a.y - 1 });
 	}
 	else {
 		f.push_back({ a.x,a.y + 1 });
@@ -267,15 +267,15 @@ void get_pawn_moves_white(int t, vector<int>& ans, int peice) {
 			continue;
 		}
 		else {
-			if (peice_board[getnumber(s[i].first, s[i].second)]*peice<0) {
+			if (peice_board[getnumber(s[i].first, s[i].second)] * peice < 0) {
 				ans.push_back(getnumber(s[i].first, s[i].second));
 			}
 		}
 	}
-	
+
 }
 void get_pawn_moves_black(int t, vector<int>& ans, int peice) {
-	sf::Vector2u a = getcord(t);
+	sf::Vector2i a = getcord(t);
 	vector<pair<int, int>> f;
 	vector<pair<int, int>> s;
 	if (white_facing_front == 0) {
@@ -294,7 +294,7 @@ void get_pawn_moves_black(int t, vector<int>& ans, int peice) {
 		if (a.y == 1) {
 			if (peice_board[getnumber(a.x, a.y + 1)] == 0)
 			{
-				f.push_back({ a.x,a.y+- 2 });
+				f.push_back({ a.x,a.y + -2 });
 			}
 		}
 		s.push_back({ a.x + 1,a.y + 1 });
@@ -322,110 +322,87 @@ void get_pawn_moves_black(int t, vector<int>& ans, int peice) {
 	}
 }
 void get_rook_moves(int t, vector<int>& ans, int peice) {
-	sf::Vector2u a = getcord(t);
+	sf::Vector2i a = getcord(t);
 	vector<pair<int, int>> s;
-	sf::Vector2u b(a);
+	sf::Vector2i b=a;
 
 	b = a;
-	if(b.y!=7)
+	if (b.y != 7)
 	{
-		while (peice_board[getnumber(b.x, b.y)] == 0 || peice_board[getnumber(b.x, b.y)] == peice) {
-			if (peice_board[getnumber(b.x, b.y)] != peice) {
-				s.push_back({ b.x,b.y });
-			}
+		do {
+			cout << "d";
 			b.y++;
+			if (b.y > 7) {
+				break;
+			}
+			s.push_back({ b.x, b.y });
 
-			if ((b.y == 7) && (peice_board[getnumber(b.x, b.y)] * peice) <= 0) {
-				s.push_back({ b.x,b.y });
-				break;
-			}
-			if ((peice_board[getnumber(b.x, b.y)] * peice) < 0) {
-				s.push_back({ b.x,b.y });
-				break;
-			}
-		}
+		} while (peice_board[getnumber(b.x, b.y)] == 0);
 	}
 	b = a;
-	if(b.y!=0)
+	if (b.y != 0)
 	{
-		while (peice_board[getnumber(b.x, b.y)] == 0 || peice_board[getnumber(b.x, b.y)] == peice) {
-			if (peice_board[getnumber(b.x, b.y)] != peice) {
-				s.push_back({ b.x,b.y });
-			}
+		do {
+			cout << "c";
 			b.y--;
+			if (b.y < 0){
+				break;
+			}
+			s.push_back({ b.x, b.y });
 
-			if ((b.y == 0) && (peice_board[getnumber(b.x, b.y)] * peice) <= 0) {
-				s.push_back({ b.x,b.y });
-				break;
-			}
-			if ((peice_board[getnumber(b.x, b.y)] * peice) < 0) {
-				s.push_back({ b.x,b.y });
-				break;
-			}
-		}
+
+		} while (peice_board[getnumber(b.x, b.y)] == 0);
 	}
+
 	b = a;
-	if(b.x!=7)
+	if (b.x != 7)
 	{
-		while (peice_board[getnumber(b.x, b.y)] == 0 || peice_board[getnumber(b.x, b.y)] == peice) {
-			if (peice_board[getnumber(b.x, b.y)] != peice) {
-				s.push_back({ b.x,b.y });
-			}
+		do {
+			cout << "b";
 			b.x++;
-
-			if ((b.x == 7) && (peice_board[getnumber(b.x, b.y)] * peice) <= 0) {
-				s.push_back({ b.x,b.y });
+			if (b.x > 7) {
 				break;
 			}
-			if ((peice_board[getnumber(b.x, b.y)] * peice) < 0) {
-				s.push_back({ b.x,b.y });
-				break;
-			}
-		}
+			s.push_back({ b.x, b.y });
+		} while (peice_board[getnumber(b.x, b.y)] == 0);
 	}
 	b = a;
-	if(b.x!=0)
+	if (b.x != 0)
 	{
-		while (peice_board[getnumber(b.x, b.y)] == 0 || peice_board[getnumber(b.x, b.y)] == peice) {
-			if (peice_board[getnumber(b.x, b.y)] != peice) {
-				s.push_back({ b.x,b.y });
-			}
+		do {
+			cout << "a:"<<b.x<<" ";
 			b.x--;
-
-			if ((b.x == 0) && (peice_board[getnumber(b.x, b.y)] * peice) <= 0) {
-				s.push_back({ b.x,b.y });
+			if (b.x < 0) {
 				break;
 			}
-			if ((peice_board[getnumber(b.x, b.y)] * peice) < 0) {
-				s.push_back({ b.x,b.y });
-				break;
-			}
-		}
+			s.push_back({ b.x, b.y });
+		} while (peice_board[getnumber(b.x, b.y)] == 0);
 	}
+
 	for (int i = 0;i < s.size();i++) {
 		ans.push_back(getnumber(s[i].first, s[i].second));
 	}
 
 
 }
-void get_king_moves(int t,vector<int>& ans,int peice) {
+void get_king_moves(int t, vector<int>& ans, int peice) {
 	vector < pair<int, int>> s;
-	sf::Vector2u pos = getcord(t);
-	s.push_back({ pos.x+1,pos.y+1 });
-	s.push_back({ pos.x+1,pos.y });
-	s.push_back({ pos.x+1,pos.y-1 });
-	s.push_back({ pos.x,pos.y+1 });
-	s.push_back({ pos.x,pos.y-1 });
-	s.push_back({ pos.x-1,pos.y+1 });
-	s.push_back({ pos.x-1,pos.y });
-	s.push_back({ pos.x-1,pos.y-1 });
+	sf::Vector2i pos = getcord(t);
+	s.push_back({ pos.x + 1,pos.y + 1 });
+	s.push_back({ pos.x + 1,pos.y });
+	s.push_back({ pos.x + 1,pos.y - 1 });
+	s.push_back({ pos.x,pos.y + 1 });
+	s.push_back({ pos.x,pos.y - 1 });
+	s.push_back({ pos.x - 1,pos.y + 1 });
+	s.push_back({ pos.x - 1,pos.y });
+	s.push_back({ pos.x - 1,pos.y - 1 });
 	for (int i = 0;i < s.size();i++) {
 		if (s[i].first < 0 || s[i].first > 7 || s[i].second < 0 || s[i].second > 7) {
 			continue;
 		}
 		else {
 			if (peice_board[getnumber(s[i].first, s[i].second)] * peice <= 0) {
-				if (!king_in_cheak_bool_only(getnumber(s[i].first, s[i].second),16)) {
+				if (!king_in_cheak_bool_only(getnumber(s[i].first, s[i].second), 16)) {
 					ans.push_back(getnumber(s[i].first, s[i].second));
 				}
 			}
@@ -451,17 +428,17 @@ bool king_in_cheak_bool_only(int t, int peice) {
 	get_rook_moves(t, rook, peice_board[t]);
 	//vector<int> danger;
 	for (auto i : knights) {
-		if (peice_board[i] == (-1)*active_player*abs(11) || peice_board[i] == (-1) * active_player * abs(12)) {
+		if (peice_board[i] == (-1) * active_player * abs(11) || peice_board[i] == (-1) * active_player * abs(12)) {
 			return true;
 		}
 	}
 	for (int i : bishop) {
-		if ((peice_board[i]) == (-1) * active_player * abs(13) || (peice_board[i]) == (-1) * active_player * abs(14) || (peice_board[i]) == (-1) * active_player * abs(15)){
+		if ((peice_board[i]) == (-1) * active_player * abs(13) || (peice_board[i]) == (-1) * active_player * abs(14) || (peice_board[i]) == (-1) * active_player * abs(15)) {
 			return true;
 		}
 	}
 	for (int i : rook) {
-		if ((peice_board[i]) == (-1) * active_player * abs(9) || (peice_board[i]) == (-1) * active_player * abs(10) || (peice_board[i]) == (-1) * active_player * abs(15)){
+		if ((peice_board[i]) == (-1) * active_player * abs(9) || (peice_board[i]) == (-1) * active_player * abs(10) || (peice_board[i]) == (-1) * active_player * abs(15)) {
 			return true;
 		}
 	}
@@ -510,8 +487,9 @@ void set_texture(sf::RenderTexture& texture) {
 }
 
 //seperates and return the moves acording to the peice
-void getmoves(int t, vector<int>& ans) {
+void getmoves(int t, vector<int>& p_moves) {
 	int peice = peice_board[t];
+	vector<int> ans;
 	if (peice <= 8 && peice >= 1) {
 		get_pawn_moves_white(t, ans, peice);
 	}
@@ -534,12 +512,17 @@ void getmoves(int t, vector<int>& ans) {
 	if (abs(peice) == abs(16)) {
 		get_king_moves(t, ans, peice);
 	}
+	for (int i = 0;i < ans.size();i++) {
+		if (peice_board[ans[i]] * peice <= 0) {
+			p_moves.push_back(ans[i]);
+		}
+	}
 
 
 	for (auto i : ans) {
 		cout << i << " ";
 	}
-	cout << "Peice:" << peice<<";";
+	cout << "Peice:" << peice << ";";
 
 }
 
@@ -602,12 +585,12 @@ void on_left_press(sf::RenderWindow& window, sf::RenderTexture& texture, vector<
 
 		int selectedpos = get_number_from_localpos(local_pos.x, local_pos.y);
 
-		if (peice_board[selectedpos] * active_player > 0){
+		if (peice_board[selectedpos] * active_player > 0) {
 			lastloc = selectedpos;
 			is_selected = true;
 			to_draw = true;
-			
-			
+
+
 			getmoves(selectedpos, p_moves);
 			//if (king_in_cheak(selectedpos, active_player * 16, danger_net[active_player + 1])) { ; }
 			setup_mid(midlletex, selectedpos, p_moves, false);
@@ -633,7 +616,7 @@ sf::Texture Piece_tex(sf::RenderTexture& peice_borad_tex) {
 		s.setScale({ 1.5,1.5 });
 		//	sf::Angle a = sf::degrees(180);
 			//s.setRotation(a);
-		sf::Vector2u loc = getcord(i);
+		sf::Vector2i loc = getcord(i);
 		sf::Vector2f l;
 
 		l.x = ((float)(loc.x) * 100);
