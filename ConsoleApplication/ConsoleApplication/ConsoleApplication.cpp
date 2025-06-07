@@ -7,7 +7,9 @@
 #include <unordered_map>
 #include <Windows.h>
 using namespace std;
+int move_number = 0;
 
+vector<vector<int>> pass_moves;// {location,should_be_peice,new_passed possible_move} to pass a move from one player to other in speacial cases like an-pasant
 vector<int> live_king_position = { 59,-1,4 };
 void get_Knight_moves(int t, vector<int>& ans, int peice);
 void get_bishop_moves(int t, vector<int>& ans, int peice,bool is_for_king);
@@ -568,10 +570,26 @@ void getmoves(int t, vector<int>& p_moves) {
 	vector<int> ans;
 	if (peice <= 8 && peice >= 1) {
 		get_pawn_moves_white(t, ans, peice,false);
+		if (pass_moves.size() != 0) {
+			for (int i = 0;i < pass_moves.size();i++) {
+				if (pass_moves[i][0] == t && (active_player * pass_moves[i][1]) > 0) {
+					cout << "error";
+					ans.push_back(pass_moves[i][2]);
+				}
+			}
+		}
 	}
 
 	if (peice <= -1 && peice >= -8) {
 		get_pawn_moves_black(t, ans, peice, false);
+		if (pass_moves.size() != 0) {
+			for (int i = 0;i < pass_moves.size();i++) {
+				if (pass_moves[i][0] == t && (active_player * pass_moves[i][1]) > 0) {
+					cout << "error";
+					ans.push_back(pass_moves[i][2]);
+				}
+			}
+		}
 	}
 	if (abs(peice) == abs(12) || abs(peice) == abs(11)) {
 		get_Knight_moves(t, ans, peice);
@@ -659,14 +677,6 @@ void handle_king_move(int from_pos, int newloc, vector<int>& p_moves) {
 			peice_board[newloc - 1] = peice_board[getnumber(7,n.y)];
 			peice_board[getnumber(7, n.y)] = 0;
 		}
-	/*	else if (from_pos - newloc < 0 && from_pos % 8 == 3) {
-			peice_board[newloc - 1] = peice_board[newloc + 1];
-			peice_board[newloc + 1] = 0;
-		}
-		else if (from_pos - newloc > 0) {
-			peice_board[newloc + 1] = peice_board[newloc - 1];
-			peice_board[newloc - 1] = 0;
-		}*/
 		else if (from_pos - newloc > 0) {
 			peice_board[newloc + 1] = peice_board[getnumber(0,n.y)];
 			peice_board[getnumber(0, n.y)] = 0;
@@ -674,6 +684,41 @@ void handle_king_move(int from_pos, int newloc, vector<int>& p_moves) {
 	}
 	castle_righs[active_player + 1][0] = false;
 }
+void handle_pawn_move(int from_pos, int newloc, vector<int>& p_moves) {
+	if (abs(getcord(from_pos).y - getcord(newloc).y)>1 && (getcord(from_pos).y==1 || getcord(from_pos).y==6)){
+		vector<int> to_pass1;
+		vector<int> to_pass2;
+		if (from_pos % 8 != 7) {
+			to_pass1.push_back(newloc + 1);
+			to_pass1.push_back(peice_board[from_pos] * -1);
+			to_pass1.push_back(from_pos - newloc < 0 ? from_pos + 8 : from_pos - 8);
+			to_pass1.push_back(newloc);
+			to_pass1.push_back(move_number+2);
+			pass_moves.push_back(to_pass1);
+		}
+		if (from_pos % 8 != 0) {
+			to_pass2.push_back(newloc - 1);
+			to_pass2.push_back(peice_board[from_pos] * -1);
+			to_pass2.push_back(from_pos - newloc < 0 ? from_pos + 8 : from_pos - 8);
+			to_pass2.push_back(newloc);
+			to_pass2.push_back(move_number+2);
+			pass_moves.push_back(to_pass2);
+		}
+		
+		
+	}
+	for (int i = 0;i < pass_moves.size();i++) {
+		cout << pass_moves[i][0] << " " << pass_moves[i][1] << " " << pass_moves[i][2] << " " << pass_moves[i][3] << " " << pass_moves[i][4] << endl;
+		if (from_pos == pass_moves[i][0] && newloc == pass_moves[i][2]) {
+			cout << "here i am";
+			peice_board[pass_moves[i][3]] = 0;
+		}
+	}
+	peice_board[newloc] = peice_board[from_pos];
+	peice_board[from_pos] = 0;
+}
+
+
 
 void handle_move(int from_pos,int newloc,vector<int>& p_moves, sf::RenderTexture& midlletex) {
 	for (auto i : danger_net[0]) {
@@ -693,27 +738,38 @@ void handle_move(int from_pos,int newloc,vector<int>& p_moves, sf::RenderTexture
 
 	}
 	else if(count(p_moves.begin(), p_moves.end(), newloc) > 0){
-		//runs when the selected loc is availabe on p_moves indicating a succefull chance
-		if (abs(peice_board[lastloc])!=16)
-		{
+		//runs when the selected loc is availabe on p_moves indicating a succefull 
+		for (int i = 0;i < pass_moves.size();i++) {
+			if (pass_moves[i][4] <= move_number) {
+				pass_moves.erase(pass_moves.begin() + i);
+				i--;
+			}
+		}
+		if (abs(peice_board[lastloc]) <= 8) {
+			handle_pawn_move(lastloc, newloc, p_moves);
+		}else if (abs(peice_board[lastloc])!=16){
+
 			if (abs(peice_board[lastloc]) == 9 || abs(peice_board[lastloc]) == 10) {
 				castle_righs[active_player + 1][lastloc == 0 ? 1 : 2] = false;
 			}
 			peice_board[newloc] = peice_board[lastloc];
 			peice_board[lastloc] = 0;
+			
 
 		}
 		else if(abs(peice_board[lastloc]) == 16){
 			handle_king_move(lastloc, newloc, p_moves);
+			live_king_position[active_player + 1] = newloc;
+			
 		}
+		
+		
 		//sets new loc with old peice ans sets old loc as empty(0)
 
 
 		//if the king changes position then reflect it on its live_king_positon
-		if (abs(peice_board[newloc]) == 16) {
-			live_king_position[active_player + 1] = newloc;
-		}
-
+		
+		move_number++;
 		is_selected = false;
 		lastloc = -1;
 		midlletex.clear(sf::Color::Transparent);
@@ -823,15 +879,8 @@ int main() {
 	
 	setup_piece_map();
 
-	peice_board[58] = 0;
-	peice_board[57] = 0;
-	peice_board[60] = 0;
-	peice_board[61] = 0;
-	peice_board[62] = 0;
 
-
-
-	
+	peice_board[30] = 10;
 
 	
 	sf::RenderTexture middletex(actualres);//middle texture for tile colors of selected and posible moves
