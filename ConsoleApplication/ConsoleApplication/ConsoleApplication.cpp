@@ -10,10 +10,10 @@ using namespace std;
 int move_number = 0;
 
 vector<vector<int>> pass_moves;// {location,should_be_peice,new_passed possible_move} to pass a move from one player to other in speacial cases like an-pasant
-vector<int> live_king_position = { 59,-1,4 };
+vector<int> live_king_position = { 59,-1,4 }; //black then white
 void get_Knight_moves(int t, vector<int>& ans, int peice);
 void get_bishop_moves(int t, vector<int>& ans, int peice,bool is_for_king);
-bool king_in_cheak_bool_only(int t, int peice);
+bool king_in_cheak_bool_only(int t, int peice,int active_player_local);
 
 
 
@@ -405,7 +405,7 @@ void get_king_moves(int t, vector<int>& ans, int peice ) {
 		if (castle_righs[active_player + 1][1] == true) {
 			int l = t-1;
 			while ((l % 8) != 0) {
-				if(peice_board[l] != 0 || king_in_cheak_bool_only(l,active_player*16)){
+				if(peice_board[l] != 0 || king_in_cheak_bool_only(l,active_player*16,active_player)){
 				break;
 				}
 				l--;
@@ -420,7 +420,7 @@ void get_king_moves(int t, vector<int>& ans, int peice ) {
 		if (castle_righs[active_player + 1][2] == true) {
 			int l = t+1;
 			while ((l % 8) != 7) {
-				if (peice_board[l] != 0 || king_in_cheak_bool_only(l, active_player * 16)){
+				if (peice_board[l] != 0 || king_in_cheak_bool_only(l, active_player * 16,active_player)){
 					break;
 				}
 				l++;
@@ -440,7 +440,7 @@ void get_queen_moves(int t, vector<int>& ans, int peice) {
 }
 
 
-bool king_in_cheak_bool_only(int t, int peice){
+bool king_in_cheak_bool_only(int t, int peice,int active_player_local){
 	vector<int> knights;
 	vector<int> bishop;
 	vector<int> rook;
@@ -452,15 +452,15 @@ bool king_in_cheak_bool_only(int t, int peice){
 	get_rook_moves(t, rook, peice_board[t],true);
 
 	/*for (auto i : king) {
-		if (peice_board[i] == -1*active_player*16) {
+		if (peice_board[i] == -1*active_player_local*16) {
 			cout << "a";
 			return true;
 		}
 	}*/
-	if (active_player == 1) {
+	if (active_player_local == 1) {
 		get_pawn_moves_white(t, pawn, peice_board[t],true);
 		for (auto i : pawn) {
-			if (peice_board[i] >= (-1) * active_player * abs(8) && peice_board[i] <= (-1) * active_player * abs(1)) {
+			if (peice_board[i] >= (-1) * active_player_local * abs(8) && peice_board[i] <= (-1) * active_player_local * abs(1)) {
 				cout << "b";
 				return true;
 			}
@@ -469,7 +469,7 @@ bool king_in_cheak_bool_only(int t, int peice){
 	else {
 		get_pawn_moves_black(t, pawn, peice_board[t], true);
 		for (auto i : pawn) {
-			if (peice_board[i] <= (-1) * active_player * abs(8) && peice_board[i] >= (-1) * active_player * abs(1)) {
+			if (peice_board[i] <= (-1) * active_player_local * abs(8) && peice_board[i] >= (-1) * active_player_local * abs(1)) {
 				return true;
 			}
 		}
@@ -477,80 +477,100 @@ bool king_in_cheak_bool_only(int t, int peice){
 	
 	//vector<int> danger;
 	for (auto i : knights) {
-		if (peice_board[i] == (-1) * active_player * abs(11) || peice_board[i] == (-1) * active_player * abs(12)) {
+		if (peice_board[i] == (-1) * active_player_local * abs(11) || peice_board[i] == (-1) * active_player_local * abs(12)) {
 			
 			return true;
 		}
 	}
 	for (int i : bishop) {
-		if ((peice_board[i]) == (-1) * active_player * abs(13) || (peice_board[i]) == (-1) * active_player * abs(14) || (peice_board[i]) == (-1) * active_player * abs(15)) {
+		if ((peice_board[i]) == (-1) * active_player_local * abs(13) || (peice_board[i]) == (-1) * active_player_local * abs(14) || (peice_board[i]) == (-1) * active_player_local * abs(15)) {
 		
 			return true;
 		}
-		if (peice_board[i] == -1 * active_player * 16 && abs(getcord(i).x - getcord(t).x) <= 1 && abs(getcord(i).y - getcord(t).y) <= 1) {
+		if (peice_board[i] == -1 * active_player_local * 16 && abs(getcord(i).x - getcord(t).x) <= 1 && abs(getcord(i).y - getcord(t).y) <= 1) {
 			return true;
 		}
 
 	}
 	for (int i : rook) {
-		if ((peice_board[i]) == (-1) * active_player * abs(9) || (peice_board[i]) == (-1) * active_player * abs(10) || (peice_board[i]) == (-1) * active_player * abs(15)) {
+		if ((peice_board[i]) == (-1) * active_player_local * abs(9) || (peice_board[i]) == (-1) * active_player_local * abs(10) || (peice_board[i]) == (-1) * active_player_local * abs(15)) {
 			
 			return true;
 		}
-		if (peice_board[i] == -1 * active_player * 16 && abs(getcord(i).x - getcord(t).x) <= 1 && abs(getcord(i).y - getcord(t).y) <= 1) {
+		if (peice_board[i] == -1 * active_player_local * 16 && abs(getcord(i).x - getcord(t).x) <= 1 && abs(getcord(i).y - getcord(t).y) <= 1) {
 			return true;
 		}
 	}
 	return false;
 }
 
-void king_in_cheak(int t, int peice) {
+void king_in_cheak(int t, int peice,int active_player_local,vector<int> &pmoves){
 	vector<int> knights;
 	vector<int> bishop;
 	vector<int> rook;
 	vector<int> pawn;
-	vector<int> king;
-	get_king_moves(t, king, peice_board[t]);
+	vector<int> danger;
+	
 	get_Knight_moves(t, knights, peice_board[t]);
 	get_bishop_moves(t, bishop, peice_board[t], true);
 	get_rook_moves(t, rook, peice_board[t], true);
 
-	for (auto i : king) {
-		if (peice_board[i] == -1 * active_player * 16) {
-			danger_net[active_player + 1].push_back(i);
-		}
-	}
-	if (active_player == 1) {
+	
+	if (active_player_local == 1) {
 		get_pawn_moves_white(t, pawn, peice_board[t], true);
 		for (auto i : pawn) {
-			if (peice_board[i] >= (-1) * active_player * abs(8) && peice_board[i] <= (-1) * active_player * abs(1)) {
-				danger_net[active_player + 1].push_back(i);
+			if (peice_board[i] >= (-1) * active_player_local * abs(8) && peice_board[i] <= (-1) * active_player_local * abs(1)) {
+				danger.push_back(i);
 			}
 		}
 	}
 	else {
 		get_pawn_moves_black(t, pawn, peice_board[t], true);
 		for (auto i : pawn) {
-			if (peice_board[i] <= (-1) * active_player * abs(8) && peice_board[i] >= (-1) * active_player * abs(1)) {
-				danger_net[active_player + 1].push_back(i);
+			if (peice_board[i] <= (-1) * active_player_local * abs(8) && peice_board[i] >= (-1) * active_player_local * abs(1)) {
+				danger.push_back(i);
 			}
 		}
 	}
 
 	//vector<int> danger;
 	for (auto i : knights) {
-		if (peice_board[i] == (-1) * active_player * abs(11) || peice_board[i] == (-1) * active_player * abs(12)) {
-			danger_net[active_player + 1].push_back(i);
+		if (peice_board[i] == (-1) * active_player_local * abs(11) || peice_board[i] == (-1) * active_player_local * abs(12)) {
+
+			danger.push_back(i);
 		}
 	}
 	for (int i : bishop) {
-		if ((peice_board[i]) == (-1) * active_player * abs(13) || (peice_board[i]) == (-1) * active_player * abs(14) || (peice_board[i]) == (-1) * active_player * abs(15)) {
-			danger_net[active_player + 1].push_back(i);
+		if ((peice_board[i]) == (-1) * active_player_local * abs(13) || (peice_board[i]) == (-1) * active_player_local * abs(14) || (peice_board[i]) == (-1) * active_player_local * abs(15)) {
+
+			danger.push_back(i);
 		}
+		if (peice_board[i] == -1 * active_player_local * 16 && abs(getcord(i).x - getcord(t).x) <= 1 && abs(getcord(i).y - getcord(t).y) <= 1) {
+			danger.push_back(i);
+		}
+
 	}
 	for (int i : rook) {
-		if ((peice_board[i]) == (-1) * active_player * abs(9) || (peice_board[i]) == (-1) * active_player * abs(10) || (peice_board[i]) == (-1) * active_player * abs(15)) {
-			danger_net[active_player + 1].push_back(i);
+		if ((peice_board[i]) == (-1) * active_player_local * abs(9) || (peice_board[i]) == (-1) * active_player_local * abs(10) || (peice_board[i]) == (-1) * active_player_local * abs(15)) {
+			danger.push_back(i);
+		}
+		if (peice_board[i] == -1 * active_player_local * 16 && abs(getcord(i).x - getcord(t).x) <= 1 && abs(getcord(i).y - getcord(t).y) <= 1) {
+			danger.push_back(i);
+		}
+	}
+
+	vector<int> local(pmoves);
+	cout << "Danger Sqares:-";
+	for (auto i : danger) {
+		cout << i << ",";
+	}
+	cout << endl;
+	pmoves.clear();
+	for (int i = 0;i < danger.size();i++){
+		for (int j = 0;j < local.size();j++) {
+			if (danger[i] == local[j]) {
+				pmoves.push_back(danger[i]);
+			}
 		}
 	}
 }
@@ -606,7 +626,7 @@ void getmoves(int t, vector<int>& p_moves) {
 	if (abs(peice) == abs(16)){
 		get_king_moves(t, ans, peice);
 		for (int i = 0;i < ans.size();i++) {
-			if (peice_board[ans[i]] * peice <= 0 && !king_in_cheak_bool_only(ans[i],peice)) {
+			if (peice_board[ans[i]] * peice <= 0 && !king_in_cheak_bool_only(ans[i],peice,active_player)) {
 				p_moves.push_back(ans[i]);
 			}
 		}
@@ -655,17 +675,7 @@ void setup_mid(sf::RenderTexture& midtex, int l, vector<int>& pmoves, bool reset
 	}
 }
 
-void cheak_both_kings(sf::RenderTexture &mid) {
-	king_in_cheak(live_king_position[0], -16);
-	king_in_cheak(live_king_position[2], 16);
-	cout << "king position:" << "white:" << live_king_position[0] << " Black:" << live_king_position[2]<<endl;
-	if (!king_in_cheak_bool_only(live_king_position[0], -16)) {
-		cout << "black in---------------------------------" << endl;
-	}
-	if (!king_in_cheak_bool_only(live_king_position[2], 16)) {
-		cout << "White in-------------------------------------" << endl;
-	}
-}
+
 
 void handle_king_move(int from_pos, int newloc, vector<int>& p_moves) {
 	peice_board[newloc] = peice_board[from_pos];
@@ -780,6 +790,43 @@ void handle_move(int from_pos,int newloc,vector<int>& p_moves, sf::RenderTexture
 	}
 }
 
+void is_move_legal(int t, vector<int>& p_moves,int u,int n,int m) {
+	if (abs(peice_board[t]) == 16) {
+		return;
+	}
+	vector<int> local(p_moves);
+	p_moves.clear();
+	for (auto i : local) {
+		int delected_peice = peice_board[i];
+		int moves_peice = peice_board[t];
+		peice_board[i] = peice_board[t];
+		peice_board[t] = 0;
+		
+		if (!king_in_cheak_bool_only(live_king_position[u], n,m)) {
+			p_moves.push_back(i);
+		}
+		peice_board[t] = moves_peice;
+		peice_board[i] = delected_peice;
+	}
+}
+
+void cheak_king(int t,vector<int> &p_moves){
+	if (king_in_cheak_bool_only(live_king_position[0], -16, -1)) {
+		//king_in_cheak(live_king_position[0], -16, -1,p_moves);
+	}
+	
+	if (king_in_cheak_bool_only(live_king_position[2], 16, +1)) {
+		//king_in_cheak(live_king_position[2], 16, 1, p_moves);
+	}
+	if (active_player == -1) {
+		is_move_legal(t, p_moves, 0, -16, -1);
+	}
+	else {
+		is_move_legal(t, p_moves, 2, 16, 1);
+	}
+	
+}
+
 //is called on selection of sqare on board
 void on_left_press(sf::RenderWindow& window, sf::RenderTexture& texture, vector<int>& p_moves, sf::RenderTexture& midlletex, bool& to_draw) {
 	sf::Vector2i local_pos = sf::Mouse::getPosition() - window.getPosition();
@@ -791,29 +838,7 @@ void on_left_press(sf::RenderWindow& window, sf::RenderTexture& texture, vector<
 		int newloc = get_number_from_localpos(local_pos.x, local_pos.y);
 		handle_move(0, newloc,p_moves, midlletex);
 
-		/*int newloc = get_number_from_localpos(local_pos.x, local_pos.y);
-		if (newloc == lastloc) {
-			//if player does not want to play this peice then this funtions cheaks that he has to first deselect the perivois paiece;
-			lastloc = -1;
-			is_selected = false;
-			midlletex.clear(sf::Color::Transparent);
-			p_moves.clear();
-
-		}
-		else if (count(p_moves.begin(), p_moves.end(), newloc) > 0) {
-			//runs when the selected loc is availabe on p_moves indicating a succefull chance
-			peice_board[newloc] = peice_board[lastloc];
-			peice_board[lastloc] = 0;
-			if (abs(peice_board[newloc]) == 16) {
-				live_king_position[active_player+1]=newloc;
-			}
-			is_selected = false;
-			lastloc = -1;
-			midlletex.clear(sf::Color::Transparent);
-			p_moves.clear();
-			
-			active_player *= (-1);
-		}*/
+		
 	}
 	else {
 		//a peice is selectec from empty position
@@ -823,6 +848,7 @@ void on_left_press(sf::RenderWindow& window, sf::RenderTexture& texture, vector<
 			is_selected = true;
 			to_draw = true;
 			getmoves(selectedpos, p_moves);
+			cheak_king(selectedpos,p_moves);
 			setup_mid(midlletex, selectedpos, p_moves, false);
 		}
 	}
