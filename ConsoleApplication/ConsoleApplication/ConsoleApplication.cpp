@@ -6,7 +6,18 @@
 #include <stack>
 #include <unordered_map>
 #include <Windows.h>
+
+
+
+
+
+
+bool debug = false;
+
 using namespace std;
+
+vector<vector<int>> give_moves(int b[]);
+
 int move_number = 0;
 
 vector<vector<int>> pass_moves;// {location,should_be_peice,new_passed possible_move} to pass a move from one player to other in speacial cases like an-pasant
@@ -28,7 +39,7 @@ sf::Vector2f spos = { 0,0 };
 sf::RectangleShape board[64]; //holds the rectanlge shapes for background board;
 int white_facing_front = 0; //facing front means on lower side of sreen
 
-int lastloc = -1; //holds the last location selected to do next move;
+int gloabal_last_loc = -1; //holds the last location selected to do next move;
 bool is_selected = false; //cheaks if a peice is already selected;
 vector<int> danger_white; //keeps peice that are atacking white king
 vector<int> danger_black;	//keeps peice that are atacking black king
@@ -461,7 +472,7 @@ bool king_in_cheak_bool_only(int t, int peice,int active_player_local){
 		get_pawn_moves_white(t, pawn, peice_board[t],true);
 		for (auto i : pawn) {
 			if (peice_board[i] >= (-1) * active_player_local * abs(8) && peice_board[i] <= (-1) * active_player_local * abs(1)) {
-				cout << "b";
+				
 				return true;
 			}
 		}
@@ -560,11 +571,11 @@ void king_in_cheak(int t, int peice,int active_player_local,vector<int> &pmoves)
 	}
 
 	vector<int> local(pmoves);
-	cout << "Danger Sqares:-";
-	for (auto i : danger) {
-		cout << i << ",";
-	}
-	cout << endl;
+	
+		
+	
+	
+	
 	pmoves.clear();
 	for (int i = 0;i < danger.size();i++){
 		for (int j = 0;j < local.size();j++) {
@@ -593,7 +604,7 @@ void getmoves(int t, vector<int>& p_moves) {
 		if (pass_moves.size() != 0) {
 			for (int i = 0;i < pass_moves.size();i++) {
 				if (pass_moves[i][0] == t && (active_player * pass_moves[i][1]) > 0) {
-					cout << "error";
+				
 					ans.push_back(pass_moves[i][2]);
 				}
 			}
@@ -605,7 +616,7 @@ void getmoves(int t, vector<int>& p_moves) {
 		if (pass_moves.size() != 0) {
 			for (int i = 0;i < pass_moves.size();i++) {
 				if (pass_moves[i][0] == t && (active_player * pass_moves[i][1]) > 0) {
-					cout << "error";
+				
 					ans.push_back(pass_moves[i][2]);
 				}
 			}
@@ -640,10 +651,12 @@ void getmoves(int t, vector<int>& p_moves) {
 	}
 
 
-	for (auto i : ans) {
-		cout << i << " ";
+	if(debug){
+		for (auto i : ans) {
+			cout << i << " ";
+		}
+		cout << "Peice:" << peice << ";";
 	}
-	cout << "Peice:" << peice << ";";
 
 }
 
@@ -654,7 +667,9 @@ void setup_mid(sf::RenderTexture& midtex, int l, vector<int>& pmoves, bool reset
 		return;
 	}
 	sf::RectangleShape a;
-	cout << (l % 8) * 100 << " " << (l / 8) * 100 << " " << l << endl;
+	if(debug){
+		cout << (l % 8) * 100 << " " << (l / 8) * 100 << " " << l << endl;
+	}
 
 	a.setSize({ 100,100 });
 	sf::Vector2f i((l % 8) * 100, (l / 8) * 100);
@@ -718,9 +733,9 @@ void handle_pawn_move(int from_pos, int newloc, vector<int>& p_moves) {
 		
 	}
 	for (int i = 0;i < pass_moves.size();i++) {
-		cout << pass_moves[i][0] << " " << pass_moves[i][1] << " " << pass_moves[i][2] << " " << pass_moves[i][3] << " " << pass_moves[i][4] << endl;
+		
 		if (from_pos == pass_moves[i][0] && newloc == pass_moves[i][2]) {
-			cout << "here i am";
+			
 			peice_board[pass_moves[i][3]] = 0;
 		}
 	}
@@ -730,14 +745,8 @@ void handle_pawn_move(int from_pos, int newloc, vector<int>& p_moves) {
 
 
 
-void handle_move(int from_pos,int newloc,vector<int>& p_moves, sf::RenderTexture& midlletex) {
-	for (auto i : danger_net[0]) {
-		cout << i << " ";
-	}
-	cout << endl;
-	for (auto i : danger_net[2]) {
-		cout << i << " ";
-	}
+void handle_move(int lastloc,int newloc,vector<int>& p_moves, sf::RenderTexture& midlletex) {
+	
 
 	if (newloc == lastloc) {
 		//if player does not want to play this peice then this funtions cheaks that he has to first deselect the perivois paiece;
@@ -830,21 +839,29 @@ void cheak_king(int t,vector<int> &p_moves){
 //is called on selection of sqare on board
 void on_left_press(sf::RenderWindow& window, sf::RenderTexture& texture, vector<int>& p_moves, sf::RenderTexture& midlletex, bool& to_draw) {
 	sf::Vector2i local_pos = sf::Mouse::getPosition() - window.getPosition();
-	cout <<"Active Player:"<< active_player << endl;
+	if(debug)
+	{
+		cout << "Active Player:" << active_player << endl;
+	}
 	if (local_pos.x < 0 || local_pos.y < 0 || local_pos.x > 800 || local_pos.y > 800) {
 		return;
 	}
+	if (active_player == 1) {
+		//vector holds moves from,to,p_moves
+		vector<vector<int>> u=give_moves(peice_board);
+		handle_move(u[0][0], u[0][1], u[1], midlletex);
+		return;
+	}
+	
 	if (is_selected) {
 		int newloc = get_number_from_localpos(local_pos.x, local_pos.y);
-		handle_move(0, newloc,p_moves, midlletex);
-
-		
+		handle_move(gloabal_last_loc, newloc,p_moves, midlletex);
 	}
 	else {
 		//a peice is selectec from empty position
 		int selectedpos = get_number_from_localpos(local_pos.x, local_pos.y);
 		if (peice_board[selectedpos] * active_player > 0) {
-			lastloc = selectedpos;
+			gloabal_last_loc = selectedpos;
 			is_selected = true;
 			to_draw = true;
 			getmoves(selectedpos, p_moves);
@@ -853,10 +870,35 @@ void on_left_press(sf::RenderWindow& window, sf::RenderTexture& texture, vector<
 		}
 	}
 	
-		
-	
 }
 
+stack<vector<int>> history;
+void move_cheaker_helper(int depth,long long &sum,sf::RenderTexture &midlletex) {
+	if (depth == 0) {
+		return;
+	}
+
+	for (int i = 0;i < 64;i++) {
+		
+		if (peice_board[i] > 0) {
+			vector<int> p_moves;
+			getmoves(i, p_moves);
+			cheak_king(i, p_moves);
+			sum += p_moves.size();
+			for(auto u:p_moves)
+			{
+				vector<int> a({ i,u });
+				history.push(a);
+				handle_move(i, u, p_moves, midlletex);
+				move_cheaker_helper(depth - 1, sum, midlletex);
+				vector<int> b = history.top();
+				handle_move(b[1], b[0], p_moves, midlletex);
+				history.pop();
+			}
+		}
+	}
+	
+}
 
 //prepares and returns the top texure for every single peice from 'peice_board[64]'
 sf::Texture Piece_tex(sf::RenderTexture& peice_borad_tex) {
@@ -904,15 +946,17 @@ int main() {
 	set_texture(texture);
 	
 	setup_piece_map();
+	//peice_board[23] = (-10);
+	//peice_board[63] = (0);
 
-
-	peice_board[30] = 10;
 
 	
 	sf::RenderTexture middletex(actualres);//middle texture for tile colors of selected and posible moves
+	long long sum = 0;
+	//done();
 
 	vector<int> p_moves;
-
+	
 
 	bool to_draw = false;
 	while (window.isOpen()) {
@@ -923,14 +967,11 @@ int main() {
 
 		set_texture(texture);
 		if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
-
 			on_left_press(window, texture, p_moves, middletex, to_draw);
 			while (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
 				Sleep(30);
 			}
 			peice_borad_tex.clear(sf::Color::Transparent);
-
-
 		}
 
 		texture.display();
