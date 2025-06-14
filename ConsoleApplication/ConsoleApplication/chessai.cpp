@@ -7,7 +7,7 @@
 #include <minmax.h>
 using namespace std;
 
-void getmoves(int t, vector<int>& p_moves);
+void getmoves(int t, vector<int>& p_moves,int active_players);
 int blackplayer(int board[], int player, int depth);
 int whiteplayer(int board[], int player, int depth);
 
@@ -51,7 +51,7 @@ vector<vector<int>> give_moves(int b[]) {
 
 	int g= whiteplayer(b, 1,global_depth);
 	vector<int>  moves_for_this_peice;
-	getmoves(mymap[g][0], moves_for_this_peice);
+	getmoves(mymap[g][0], moves_for_this_peice,1);
 	return { {mymap[g][0],mymap[g][1]},moves_for_this_peice};
 	
 	
@@ -60,6 +60,7 @@ vector<vector<int>> give_moves(int b[]) {
 
 
 void print_board(int b[]) {
+	return;
 	for (int i = 0;i < 64;i++) {
 		if (i % 8 == 0) {
 			cout << endl;
@@ -73,8 +74,6 @@ void print_board(int b[]) {
 int whiteplayer(int board[], int player, int depth) {
 	if (depth == 0){
 		print_board(board);
-		int x;
-		cin >> x;
 		return get_total_count(board);
 	}
 
@@ -82,7 +81,7 @@ int whiteplayer(int board[], int player, int depth) {
 	for (int i = 0;i < 64;i++) {
 		if (board[i] > 0) {
 			vector<int> moves_for_this_peice;
-			getmoves(i, moves_for_this_peice);
+			getmoves(i, moves_for_this_peice,1);
 			int peice_moved = board[i];
 			if (moves_for_this_peice.size() == 0) {
 				continue;
@@ -96,9 +95,7 @@ int whiteplayer(int board[], int player, int depth) {
 					max_got_from_all_moves = max(max_got_from_all_moves, blackplayer(board, -1 * player, depth - 1));
 					if(depth==global_depth)
 					{
-						
 						mymap[max_got_from_all_moves] = { i,j };
-						
 					}
 				}
 				
@@ -113,13 +110,13 @@ int blackplayer(int board[], int player, int depth) {
 	if (depth == 0) {
 		print_board(board);
 		
-		return -1*get_total_count(board);
+		return get_total_count(board);
 	}
-	int max_got_from_all_moves = INT_MIN;
-	for (int i = 0;i < 64;i++) {
+	int max_got_from_all_moves = INT_MAX;
+	for (int i = 0;i < 64;i++){
 		if (board[i] < 0) {
 			vector<int> moves_for_this_peice;
-			getmoves(i, moves_for_this_peice);
+			getmoves(i, moves_for_this_peice,-1);
 			if (moves_for_this_peice.size() == 0){
 				continue;
 			}
@@ -130,13 +127,13 @@ int blackplayer(int board[], int player, int depth) {
 				board[i] = 0;
 				
 			//	cout << get_total_count(board) <<"\n";
-				max_got_from_all_moves = max(max_got_from_all_moves,-1* whiteplayer(board, player, depth - 1));
+				max_got_from_all_moves = min(max_got_from_all_moves,whiteplayer(board, player, depth - 1));
 				board[i] = peice_moved;
 				board[j] = peice_to_moved;
 			}
 		}
 	}
-	return -1*max_got_from_all_moves;
+	return max_got_from_all_moves;
 }
 
 	
