@@ -895,7 +895,8 @@ sf::Texture Piece_tex(sf::RenderTexture& peice_borad_tex) {
 			continue;
 		}
 		sf::Texture p;
-		string path = "C:\\Users\\ad999\\source\\repos\\ConsoleShowCase\\ConsoleApp\\ConsoleApplication\\ConsoleApplication\\" + mypmap[peice_board[i]];
+		string mypath = ""; //update this for your system(path to peice img)
+		string path = mypath + mypmap[peice_board[i]];
 		if (!p.loadFromFile(path)) {
 			exit(1);
 		}
