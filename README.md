@@ -37,7 +37,9 @@
 - All legal moves are generated using this 2D coordinate system.
 - Moves are then converted back to single-number positions for execution.
 
+
 ---
+![image](https://github.com/user-attachments/assets/8a938b71-8244-4838-89e8-ee561633428e)
 
 
 
