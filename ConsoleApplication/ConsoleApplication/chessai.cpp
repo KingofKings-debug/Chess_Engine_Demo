@@ -6,11 +6,16 @@
 #include <iostream>
 using namespace std;
 
-int global_depth = 4;
+int global_depth = 6;
 map<int, vector<int>> mymap;
+
+
+void get_Knight_moves(int t, vector<int>& ans, int peice, int peice_board[]);
+void get_bishop_moves(int t, vector<int>& ans, int peice, bool is_for_king, int peice_board[]);
+void get_rook_moves(int t, vector<int>& ans, int peice, bool is_for_king, int peice_board[]);
 void getmoves(int t, vector<int>& p_moves, int active_players, int peice_board[]);
-int white_play(int board[], int depth);
-int black_play(int board[], int depth);
+int white_play(int board[], int depth,int alpha,int beta);
+int black_play(int board[], int depth, int alpha, int beta);
 
 
 int eval_pawn(int side, int board[],int loc[]) {
@@ -37,11 +42,10 @@ int eval_bishop(int side, int board[], int loc[]) {
 		}
 		evaluation += 300;
 		vector<int> moves;
-		getmoves(loc[i], moves, side, board);
+		//get_bishop_moves(loc[i], moves,false, board[loc[i]], board);
 		evaluation += moves.size();
 	}
 	return evaluation;
-
 }
 
 int eval_knight(int side, int board[], int loc[]) {
@@ -52,11 +56,12 @@ int eval_knight(int side, int board[], int loc[]) {
 		}
 		evaluation += 300;
 		vector<int> moves;
-		getmoves(loc[i], moves, side, board);
+		//get_Knight_moves(loc[i], moves, board[loc[i]], board);
 		evaluation += moves.size();
 	}
 	return evaluation;
 }
+
 int eval_rook(int side, int board[], int loc[]) {
 	int evaluation = 0;
 	for (int i = 0;i < 2;i++) {
@@ -65,7 +70,7 @@ int eval_rook(int side, int board[], int loc[]) {
 		}
 		evaluation += 500;
 		vector<int> moves;
-		getmoves(loc[i], moves, side, board);
+		//get_rook_moves(loc[i], moves, false, board[loc[i]], board);
 		evaluation += moves.size();
 	}
 	return evaluation;
@@ -140,7 +145,8 @@ int eveluate_baord_with_peice(int side,int board[]) {
 
 
 
-int white_play(int board[],int depth) {
+
+int white_play(int board[],int depth,int alpha,int beta) {
 	if (depth == 0) {
 		return eveluate_baord_with_peice(1, board);
 	}
@@ -155,7 +161,7 @@ int white_play(int board[],int depth) {
 				board[u] = board[i];
 				board[i] = 0;
 
-				int score=black_play(board, depth - 1);
+				int score=black_play(board, depth - 1,alpha,beta);
 				if (score > max_till_now) {
 					max_till_now = score;
 					if (depth == global_depth) {
@@ -163,18 +169,24 @@ int white_play(int board[],int depth) {
 					}
 
 				}
+
 				board[i] = peice_to_be_moved;
 				board[u] = peice_located;
+				if (max_till_now >= beta) {
+					break;
+				}
 			}
 		}
+		
+		alpha = max(alpha, max_till_now);
 	}
 	return max_till_now;
 }
-int black_play(int board[], int depth) {
+int black_play(int board[], int depth,int alpha,int beta) {
 	if (depth == 0) {
-		return eveluate_baord_with_peice(-1, board);
+		return (-1)*eveluate_baord_with_peice(-1, board);
 	}
-	int max_got_from_all_moves = INT_MIN;
+	int max_got_from_all_moves = INT_MAX;
 	for (int i = 0;i < 64;i++) {
 		if (board[i] < 0) {
 			vector<int> p_moves;
@@ -184,20 +196,24 @@ int black_play(int board[], int depth) {
 				int peice_located = board[u];
 				board[u] = board[i];
 				board[i] = 0;
-				max_got_from_all_moves = max(max_got_from_all_moves, white_play(board, depth-1));
+				max_got_from_all_moves = min(max_got_from_all_moves, white_play(board, depth-1,alpha,beta));
+
 				board[i] = peice_to_be_moved;
 				board[u] = peice_located;
+				if (max_got_from_all_moves <= alpha) {
+					break;
+				}
 			}
 		}
+		
+		beta = min(beta, max_got_from_all_moves);
 	}
 	return max_got_from_all_moves;
 }
 
 vector<vector<int>> ai_move_handler(int board[]) {
-	int g=white_play(board, global_depth);
+	int g=white_play(board, global_depth,INT_MIN,INT_MAX);
 	vector<int>  moves_for_this_peice;
 	getmoves(mymap[g][0], moves_for_this_peice, 1,board);
 	return {{mymap[g][0],mymap[g][1]},moves_for_this_peice };
-
-
 }
