@@ -3,217 +3,232 @@
 #include <set>
 #include <vector>
 #include <map>
+#include <algorithm>
+#include <chrono>
 #include <iostream>
+#include <stack>
 using namespace std;
-
-int global_depth = 6;
+using namespace std::chrono;
+int global_depth = 7;
 map<int, vector<int>> mymap;
 
 
-void get_Knight_moves(int t, vector<int>& ans, int peice, int peice_board[]);
-void get_bishop_moves(int t, vector<int>& ans, int peice, bool is_for_king, int peice_board[]);
-void get_rook_moves(int t, vector<int>& ans, int peice, bool is_for_king, int peice_board[]);
-void getmoves(int t, vector<int>& p_moves, int active_players, int peice_board[]);
-int white_play(int board[], int depth,int alpha,int beta);
-int black_play(int board[], int depth, int alpha, int beta);
+struct board_total_info {
+	vector<int> board;
+	vector<vector<bool>> castle_rights;
+	int white_facing;
+	vector<int> live_king_position;
+	int active_player;
+};
 
 
-int eval_pawn(int side, int board[],int loc[]) {
-	int evalutaion = 0;
-	set<int> myset;
-	for (int i = 0;i < 8;i++) {
-		if (loc[i] == -1) { break; }
-		if (myset.empty() || myset.count(loc[i] % 8) == 0) {
-			evalutaion += 100;
-			myset.insert(loc[i] % 8);
+int board_center_distance[] =
+{ 5, 4, 4, 4, 4, 4, 4, 5,
+4, 4, 3, 3, 3, 3, 4, 4,
+4, 3, 2, 2, 2, 2, 3, 4,
+4, 3, 2, 1, 1, 2, 3, 4,
+4, 3, 2, 1, 1, 2, 3, 4,
+4, 3, 2, 2, 2, 2, 3, 4,
+4, 4, 3, 3, 3, 3, 4, 4,
+5, 4, 4, 4, 4, 4, 4, 5 };
+
+
+
+
+
+void getmoves(int t, vector<int>& p_moves, struct board_total_info &game);
+int white_play(struct board_total_info &game, int depth,int alpha,int beta,map<vector<int>,int> &board_map);
+int black_play(struct board_total_info &game, int depth, int alpha, int beta, map<vector<int>, int> &board_map);
+void ai_move_doer(int from_loc, int to_loc, struct board_total_info& game);
+
+
+
+int eval_only_peice(int side, vector<int> board) {
+	int ans = 0;
+	vector<int> values = { 1,1,1,1,1,1,1,1,5,5,3,3,3,3,9,100 };
+	for (int i = 0;i < 64;i++) {
+		if (board[i] != 0) {
+			ans += values[abs(board[i])-1]*100*(board[i]<0?(-1):1);
+			continue;
 		}
-		else {
-			evalutaion += 50;
-		}
-	}
-	return evalutaion;
-}
-
-int eval_bishop(int side, int board[], int loc[]) {
-	int evaluation = 0;
-	for (int i = 0;i < 2;i++) {
-		if (loc[i] == -1) {
-			break;
-		}
-		evaluation += 300;
-		vector<int> moves;
-		//get_bishop_moves(loc[i], moves,false, board[loc[i]], board);
-		evaluation += moves.size();
-	}
-	return evaluation;
-}
-
-int eval_knight(int side, int board[], int loc[]) {
-	int evaluation = 0;
-	for (int i = 0;i < 2;i++) {
-		if (loc[i] == -1) {
-			break;
-		}
-		evaluation += 300;
-		vector<int> moves;
-		//get_Knight_moves(loc[i], moves, board[loc[i]], board);
-		evaluation += moves.size();
-	}
-	return evaluation;
-}
-
-int eval_rook(int side, int board[], int loc[]) {
-	int evaluation = 0;
-	for (int i = 0;i < 2;i++) {
-		if (loc[i] == -1) {
-			break;
-		}
-		evaluation += 500;
-		vector<int> moves;
-		//get_rook_moves(loc[i], moves, false, board[loc[i]], board);
-		evaluation += moves.size();
-	}
-	return evaluation;
-}
-int evaluate_board_with_maps(int side,int board[],int pawn[],int bishop[], int knight[], int rook[]) {
-	int eval = 0;
-
-	eval += eval_pawn(side, board, pawn);
-
-	eval += eval_bishop(side, board, bishop);
-	
-	eval += eval_knight(side, board, knight);
-	
-	eval += eval_rook(side, board, rook);
-	
-	return eval;
-}
-
-
-int eveluate_baord_with_peice(int side,int board[]) {
-	int evaluation = 0;
-	int pawn[8],p= 0;
-	int bishop[2],b=0;
-	int knight[2],k=0;
-	int rook[2],r=0;
-	for (int i = 0;i <=63;i++) {
 		if (board[i] * side > 0) {
-			int peice = abs(board[i]);
-			if (peice<=8 && peice>=1){
-				pawn[p] = i;
-				p++;
+			if (abs(board[i]) <= 8 && abs(board[i]) > 8) {
+				ans += 100;
 			}
-			else if (peice == 9 || peice == 10) {
-				rook[r] = i;
-				r++;
+			if (abs(board[i]) == 11 || abs(board[i]) == 12 || abs(board[i]) == 13 || abs(board[i]) == 14) {
+				ans += 300;
 			}
-			else if (peice == 11 || peice == 12) {
-				knight[k] = i;
-				k++;
+			if ((abs(board[i]) == 9) || (abs(board[i]) == 10)) {
+				ans += 500;
 			}
-			else if (peice == 13 || peice == 14) {
-				bishop[b] = i;
-				b++;
+			if (abs(board[i]) == 15) {
+				ans += 900;
 			}
-			else if (peice == 15) {
-				evaluation += 800;
-			}
-			else if (peice == 16) {
-				evaluation += 10000;
+			if (abs(board[i]) == 16) {
+				ans += 1000;
 			}
 		}
-	}
-	while (r < 2) {
-		rook[r] = -1;
-		r++;
-	}
-	while (b < 2) {
-		bishop[b] = -1;
-		b++;
-	}
-	while (k < 2) {
-		knight[k] = -1;
-		k++;
-	}
-	while (p < 8) {
-		pawn[p] = -1;
-		p++;
 	}
 	
-	return evaluation+evaluate_board_with_maps(side,board,pawn,bishop,knight,rook);
+	return ans;
 }
 
 
 
 
-int white_play(int board[],int depth,int alpha,int beta) {
-	if (depth == 0) {
-		return eveluate_baord_with_peice(1, board);
+
+long long n = 0;
+int cheack_move_value(vector<int> moves, vector<int> board) {
+	vector<int> values = { 1,1,1,1,1,1,1,1,5,5,3,3,3,3,9,100 };
+	int ans = 0;
+	
+	if (moves[3] != 0) {
+		ans += 100;
+		if (values[abs(moves[2]) - 1] < values[abs(moves[3]) - 1]) {
+			ans += values[abs(moves[3]) - 1] - values[abs(moves[2]) - 1];
+		}
 	}
+	return ans;
+	
+	
+}
+bool comp( const pair<vector<int>, int> &a,const pair<vector<int>, int> &b) {
+	return true;
+}
+int white_play(struct board_total_info& game, int depth, int alpha, int beta, map<vector<int>, int>& board_map) {
+	if (depth == 0) {
+		n++;
+		return eval_only_peice(1, game.board);
+	}
+	if (board_map.find(game.board) != board_map.end()) {
+		return board_map[game.board];
+	}
+	vector<pair<vector<int>, int>> move_list;
+	move_list.reserve(200);
+	for (int i = 0;i < 64;i++) {
+		if (game.board[i] > 0 ) {
+			vector<int> peice_moves;
+			getmoves(i, peice_moves, game);
+			
+			for (int j = 0;j < peice_moves.size();j++) {
+				int val = cheack_move_value({ i,peice_moves[j],game.board[i],game.board[peice_moves[j]] }, game.board);
+				move_list.push_back({ { i,peice_moves[j],game.board[i],game.board[peice_moves[j]]},val});
+			}
+		}
+	}
+	sort(move_list.begin(), move_list.end(), [](pair<vector<int>, int> a, pair<vector<int>, int> b) {return (int)(a.second) > (int)(b.second);});
+	
+	//to be replaced by move handler
+
+	//cout << "white moves count done " << move_list.size() << endl;
 	int max_till_now = INT_MIN;
-	for (int i = 0;i < 64;i++) {
-		if (board[i] > 0) {
-			vector<int> p_moves;
-			getmoves(i, p_moves, 1, board);
-			for (auto u : p_moves) {
-				int peice_to_be_moved = board[i];
-				int peice_located = board[u];
-				board[u] = board[i];
-				board[i] = 0;
-
-				int score=black_play(board, depth - 1,alpha,beta);
-				if (score > max_till_now) {
-					max_till_now = score;
-					if (depth == global_depth) {
-						mymap[max_till_now] = { i,u };
-					}
-
-				}
-
-				board[i] = peice_to_be_moved;
-				board[u] = peice_located;
-				if (max_till_now >= beta) {
-					break;
-				}
+	for (int i = 0;i < move_list.size();i++) {
+		struct board_total_info game_copy = game;
+		ai_move_doer((move_list[i].first)[0], (move_list[i].first)[1], game);
+		//game.board[(move_list[i].first)[0]] = 0;
+		//game.board[(move_list[i].first)[1]] = (move_list[i].first)[2];
+		int score = black_play(game, depth - 1, alpha, beta, board_map);
+		
+		
+		if (max_till_now < score) {
+			max_till_now = score;
+			if (depth == global_depth) {
+				mymap[max_till_now] = { (move_list[i].first)[0] ,(move_list[i].first)[1] };
+			}
+			if (score > alpha) {
+				alpha = score;
 			}
 		}
+		//game.board[(move_list[i].first)[0]] = (move_list[i].first)[2];
+		//game.board[(move_list[i].first)[1]] = (move_list[i].first)[3];
+		game = game_copy;
+		alpha = max(alpha, score);
+		if (score >= beta) {
+			return score;
+		}
 		
-		alpha = max(alpha, max_till_now);
 	}
+	board_map[game.board] = max_till_now;
 	return max_till_now;
-}
-int black_play(int board[], int depth,int alpha,int beta) {
-	if (depth == 0) {
-		return (-1)*eveluate_baord_with_peice(-1, board);
-	}
-	int max_got_from_all_moves = INT_MAX;
-	for (int i = 0;i < 64;i++) {
-		if (board[i] < 0) {
-			vector<int> p_moves;
-			getmoves(i, p_moves, -1, board);
-			for (auto u : p_moves) {
-				int peice_to_be_moved = board[i];
-				int peice_located = board[u];
-				board[u] = board[i];
-				board[i] = 0;
-				max_got_from_all_moves = min(max_got_from_all_moves, white_play(board, depth-1,alpha,beta));
 
-				board[i] = peice_to_be_moved;
-				board[u] = peice_located;
-				if (max_got_from_all_moves <= alpha) {
-					break;
-				}
+	
+}
+
+
+int black_play(struct board_total_info &game, int depth,int alpha,int beta, map<vector<int>, int> &board_map) {
+	if (depth == 0) {
+		n++;
+		return eval_only_peice(1,game.board);
+	}
+	
+	if (board_map.find(game.board) != board_map.end()) {
+		return board_map[game.board];
+	}
+	//move list follows this structure= {{from_loc,final_loc,peice_moved_from_loc,orignal_peice_final_loc},move_imp._score}
+	vector<pair<vector<int>, int>> move_list;
+	move_list.reserve(200);
+	for (int i = 0;i < 64;i++) {
+		if (game.board[i] < 0) {
+			vector<int> peice_moves;
+			getmoves(i, peice_moves, game);
+			for (int j = 0;j < peice_moves.size();j++) {
+				
+				int val = cheack_move_value({ i,peice_moves[j],game.board[i],game.board[peice_moves[j]] }, game.board);
+				move_list.push_back({ { i,peice_moves[j],game.board[i],game.board[peice_moves[j]]},val });
 			}
 		}
-		
-		beta = min(beta, max_got_from_all_moves);
 	}
-	return max_got_from_all_moves;
+	sort(move_list.begin(), move_list.end(), [](pair<vector<int>, int> a, pair<vector<int>, int> b) {return (a.second) > (b.second);});
+	int min_till_now = INT_MAX;
+	//cout << "black moves count done " << move_list.size() << endl;
+	for (int i = 0;i < move_list.size();i++) {
+	//	game.board[(move_list[i].first)[0]] = 0;
+	//game.board[(move_list[i].first)[1]] = (move_list[i].first)[2];
+		struct board_total_info game_copy = game;
+		ai_move_doer((move_list[i].first)[0], (move_list[i].first)[1], game);
+		int score = white_play(game, depth - 1, alpha, beta, board_map);
+		if (score < min_till_now) {
+			min_till_now = score;
+			if (score < beta) {
+				beta = score;
+			}
+		}
+		min_till_now = min(min_till_now, score);
+		game = game_copy;
+		//game.board[(move_list[i].first)[0]] = (move_list[i].first)[2];
+		//game.board[(move_list[i].first)[1]] = (move_list[i].first)[3];
+		beta = min(beta, score);
+		if (score <= alpha) {
+			return score;
+		}
+	}
+	board_map[game.board] = min_till_now;
+	return min_till_now;
 }
 
-vector<vector<int>> ai_move_handler(int board[]) {
-	int g=white_play(board, global_depth,INT_MIN,INT_MAX);
+
+vector<vector<int>> ai_move_handler(struct board_total_info &game) {
+	n = 0;
+
+	//string the already visited moves
+	map<vector<int>, int> board_map;
+
+	stack<struct board_total_info> mystack;
+	
+
+	auto start = high_resolution_clock::now();
+	int alpha = INT_MIN;
+	int beta = INT_MAX;
+	int g=white_play(game, global_depth,alpha,beta,board_map);
+	auto stop = high_resolution_clock::now();
+	auto duration = duration_cast<microseconds>(stop - start);
+
 	vector<int>  moves_for_this_peice;
-	getmoves(mymap[g][0], moves_for_this_peice, 1,board);
+	getmoves(mymap[g][0], moves_for_this_peice,game);
+	cout << "moves_check:" << n << endl;
+	cout << "Time Taken:" << float(duration.count())/ 1000000.0 << endl;
+	cout << mymap[g][0] << " " << mymap[g][1] << " " << game.board[mymap[g][0]];
 	return {{mymap[g][0],mymap[g][1]},moves_for_this_peice };
+	
+
 }
